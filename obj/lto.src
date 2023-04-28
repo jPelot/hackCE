@@ -1,0 +1,537 @@
+	section	.text,"ax",@progbits
+	assume	adl = 1
+	section	.text,"ax",@progbits
+	public	_jumpPC
+_jumpPC:
+	ld	hl, _aReg
+	ld	iy, _PC
+	ld	hl, (hl)
+	ld	(iy), l
+	ld	(iy + 1), h
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_ramRead
+_ramRead:
+	ld.sis	hl, 0
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_ramWrite
+_ramWrite:
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_alu
+_alu:
+	ld	hl, -3
+	call	__frameset
+	ld.sis	de, 0
+	ld	hl, (_inst+12)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB3_2
+	ld	l, e
+	ld	h, d
+	jr	BB3_3
+BB3_2:
+	ld	hl, _dReg
+	ld	hl, (hl)
+BB3_3:
+	ld	(ix - 3), hl
+	ld	iy, _aReg
+	ld	de, (_inst+9)
+	ld	hl, (_inst+18)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	c, -1
+	ld	b, 0
+	ld	a, c
+	jr	z, BB3_5
+	ld	a, b
+BB3_5:
+	ld	iy, (iy)
+	ex	de, hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB3_7
+	ld	c, b
+BB3_7:
+	and	a, c
+	bit	0, a
+	jr	nz, BB3_9
+	ld.sis	hl, 0
+	ex	de, hl
+	ld	iyl, e
+	ld	iyh, d
+	ex	de, hl
+BB3_9:
+	ld	hl, (_inst+15)
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	ld.sis	de, -1
+	ld.sis	hl, 0
+	ld	c, e
+	ld	b, d
+	jr	z, BB3_11
+	ld	c, l
+	ld	b, h
+BB3_11:
+	ld	hl, (ix - 3)
+	call	__sxor
+	ld	(ix - 3), hl
+	ld	hl, (_inst+21)
+	ld	bc, 1
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB3_13
+	ld.sis	de, 0
+BB3_13:
+	ex	de, hl
+	ld	e, iyl
+	ld	d, iyh
+	ex	de, hl
+	ld	c, e
+	ld	b, d
+	call	__sxor
+	ld	de, (_inst+24)
+	ex	de, hl
+	ld	iyl, e
+	ld	iyh, d
+	ex	de, hl
+	ld	bc, (ix - 3)
+	add.sis	iy, bc
+	call	__sand
+	ld	c, l
+	ld	b, h
+	ex	de, hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	jr	z, BB3_15
+	ld	iyl, c
+	ld	iyh, b
+BB3_15:
+	ld	hl, (_inst+27)
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	jr	z, BB3_17
+	ld.sis	bc, 0
+	jr	BB3_18
+BB3_17:
+	ld.sis	bc, -1
+BB3_18:
+	ex	de, hl
+	ld	e, iyl
+	ld	d, iyh
+	ex	de, hl
+	call	__sxor
+	ld	e, l
+	ld	d, h
+	add.sis	hl, bc
+	or	a, a
+	sbc.sis	hl, bc
+	jr	z, BB3_20
+	ld	a, 0
+	jr	BB3_21
+BB3_20:
+	ld	a, 1
+BB3_21:
+	ld	(_zeroF), a
+	ld	c, 15
+	ld	l, e
+	ld	h, d
+	call	__sshru
+	ld	a, l
+	ld	(_negF), a
+	ld	hl, _aluOut
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	pop	hl
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_loadInst
+_loadInst:
+	ld	hl, -6
+	call	__frameset
+	ld	hl, _value
+	ld	iy, 2
+	ld	bc, 1
+	ld	a, (_handle)
+	ld	e, a
+	push	de
+	push	bc
+	push	iy
+	push	hl
+	call	_ti_Read
+	pop	de
+	pop	de
+	pop	de
+	pop	de
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	jr	nz, BB4_2
+	ld	hl, _value
+	ld	bc, (hl)
+	ld	a, b
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	h, a
+	ld	l, c
+	ld	(ix - 6), hl
+	ld	bc, 0
+	jr	BB4_3
+BB4_2:
+	ld.sis	de, 0
+	ld	a, 1
+	ld	hl, _value
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	ld	(_end), a
+	ld	bc, 0
+	ld	(ix - 6), bc
+BB4_3:
+	ld	hl, _inst+45
+	ld	(ix - 3), hl
+BB4_4:
+	push	bc
+	pop	hl
+	ld	de, 16
+	or	a, a
+	sbc	hl, de
+	jr	z, BB4_6
+	ld	hl, (ix - 6)
+	push	bc
+	pop	de
+	call	__ishru
+	ld	bc, 1
+	call	__iand
+	push	de
+	pop	bc
+	ld	iy, (ix - 3)
+	ld	(iy), hl
+	inc	bc
+	lea	iy, iy - 3
+	ld	(ix - 3), iy
+	jr	BB4_4
+BB4_6:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_printInst
+_printInst:
+	ld	hl, -3
+	call	__frameset
+	ld	iy, 0
+BB5_1:
+	ld	de, 48
+	lea	hl, iy
+	or	a, a
+	sbc	hl, de
+	jr	z, BB5_3
+	lea	de, iy
+	ld	hl, _inst
+	add	hl, de
+	ld	hl, (hl)
+	push	hl
+	ld	hl, _.str
+	push	hl
+	ld	(ix - 3), iy
+	call	_printf
+	ld	iy, (ix - 3)
+	pop	hl
+	pop	hl
+	ld	de, 3
+	add	iy, de
+	jr	BB5_1
+BB5_3:
+	ld	iy, -3145600
+	pop	hl
+	pop	ix
+	jp	_os_NewLine
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_dest
+_dest:
+	ld	iy, _aluOut
+	ld	hl, (_inst+30)
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	jr	nz, BB6_2
+	ld	hl, _aReg
+	ld	bc, (iy)
+	ld	(hl), c
+	inc	hl
+	ld	(hl), b
+BB6_2:
+	ld	hl, (_inst+33)
+	or	a, a
+	sbc	hl, de
+	jr	nz, BB6_4
+	ld	hl, _dReg
+	ld	de, (iy)
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+BB6_4:
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_processInst
+_processInst:
+	ld	hl, (_inst)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB7_2
+	ld	hl, _value
+	ld	iy, _aReg
+	ld	hl, (hl)
+	ld	(iy), l
+	ld	(iy + 1), h
+	ret
+BB7_2:
+	call	_alu
+	call	_dest
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_run
+_run:
+	ld	hl, -1
+	call	__frameset
+BB8_1:
+	ld	(ix - 1), e
+	call	_loadInst
+	call	_printInst
+	call	_processInst
+	ld	hl, -720878
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 255
+	call	__sand
+	ld	a, l
+	cp	a, 32
+	ld	e, c
+	jr	z, BB8_3
+	ld	e, 0
+BB8_3:
+	ld	a, l
+	cp	a, 32
+	jr	nz, BB8_1
+	bit	0, (ix - 1)
+	jr	nz, BB8_1
+	ld	a, 1
+	ld	(_end), a
+	inc	sp
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_main
+_main:
+	ld	iy, -3145600
+	call	_os_ClrLCD
+	call	_os_HomeUp
+	call	_os_DrawStatusBar
+	ld	hl, _.str.2
+	push	hl
+	ld	hl, _.str.1
+	push	hl
+	call	_ti_Open
+	pop	hl
+	pop	hl
+	ld	(_handle), a
+	or	a, a
+	jr	z, BB9_2
+	call	_run
+	ld	hl, _dReg
+	ld	de, (hl)
+	ld	a, d
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	h, a
+	ld	l, e
+	push	hl
+	ld	hl, _.str
+	push	hl
+	call	_printf
+	pop	hl
+	pop	hl
+	ld	iy, -3145600
+	call	_os_NewLine
+	ld	a, (_handle)
+	ld	l, a
+	push	hl
+	call	_ti_GetSize
+	pop	de
+	ld	de, 0
+	ld	e, l
+	ld	d, h
+	push	de
+	ld	hl, _.str
+	push	hl
+	call	_printf
+	pop	hl
+	pop	hl
+	ld	iy, -3145600
+	call	_os_NewLine
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, _.str.3
+	push	hl
+	ld	hl, _.str.4
+	push	hl
+	call	_os_GetStringInput
+	pop	hl
+	pop	hl
+	pop	hl
+BB9_2:
+	or	a, a
+	sbc	hl, hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.bss,"aw",@nobits
+	public	_end
+_end:
+	rb	1
+
+	section	.data,"aw",@progbits
+	public	_inst
+_inst:
+	dl	1
+	dl	1
+	dl	1
+	dl	0
+	dl	0
+	dl	0
+	dl	0
+	dl	0
+	dl	1
+	dl	0
+	dl	0
+	dl	0
+	dl	0
+	dl	0
+	dl	0
+	dl	0
+
+	section	.data,"aw",@progbits
+	public	_value
+_value:
+	dw	1
+
+	section	.bss,"aw",@nobits
+	public	_aReg
+_aReg:
+	rb	2
+
+	section	.bss,"aw",@nobits
+	public	_PC
+_PC:
+	rb	2
+
+	section	.bss,"aw",@nobits
+	public	_dReg
+_dReg:
+	rb	2
+
+	section	.bss,"aw",@nobits
+	public	_zeroF
+_zeroF:
+	rb	1
+
+	section	.bss,"aw",@nobits
+	public	_negF
+_negF:
+	rb	1
+
+	section	.bss,"aw",@nobits
+	public	_aluOut
+_aluOut:
+	rb	2
+
+	section	.bss,"aw",@nobits
+	public	_handle
+_handle:
+	rb	1
+
+	section	.rodata,"a",@progbits
+	private	_.str
+_.str:
+	db	"%i", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.1
+_.str.1:
+	db	"TEST", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.2
+_.str.2:
+	db	"r", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.3
+_.str.3:
+	db	1 dup 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.4
+_.str.4:
+	db	"exit", 0
+
+	section	.bss,"aw",@nobits
+	public	_ram16k
+_ram16k:
+	rb	32000
+
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	extern	__Unwind_SjLj_Register
+	extern	__frameset
+	extern	_os_ClrLCD
+	extern	__sand
+	extern	_os_DrawStatusBar
+	extern	__ishru
+	extern	__sxor
+	extern	__sshru
+	extern	_ti_Read
+	extern	__Unwind_SjLj_Unregister
+	extern	_printf
+	extern	__iand
+	extern	_ti_Open
+	extern	_ti_GetSize
+	extern	_os_NewLine
+	extern	_os_GetStringInput
+	extern	_os_HomeUp
