@@ -10,6 +10,9 @@
 char jmp[8][4] = {"","JGT","JEQ","JGE","JLT","JNE","JLE","JMP"};
 
 
+
+
+
 /*
 
 int* binToArray(char in) {
@@ -55,6 +58,40 @@ int16_t aluOut;
 bool zeroF;
 bool negF;
 
+
+char cInst[4] = "   ";
+
+void aluInst() {
+	int c = (4032 & value) >> 6;
+	
+	char a[5] = " ";
+	if(inst[3] == 0) {
+		a[0] = 'A';
+	} else {
+		a[0] = 'M';
+	}
+	
+	
+	if(c == 0b101010) {strcpy(cInst,  "0");}
+	if(c == 0b111111) {strcpy(cInst,  "1");}
+	if(c == 0b111010) {strcpy(cInst, "-1");}
+	if(c == 0b001100) {strcpy(cInst,  "D");}
+	if(c == 0b110000) {strcpy(cInst, a);}
+	if(c == 0b001101) {strcpy(cInst, "!D");}
+	if(c == 0b110001) {strcpy(cInst, "!"); strcat(cInst, a);}
+	if(c == 0b001111) {strcpy(cInst, "-D");}
+	if(c == 0b110011) {strcpy(cInst, "-"); strcat(cInst, a);}
+	if(c == 0b011111) {strcpy(cInst, "D+1");}
+	if(c == 0b110111) {strcpy(cInst, a); strcat(cInst, "+1");}
+	if(c == 0b001110) {strcpy(cInst, "D-1");}
+	if(c == 0b110010) {strcpy(cInst, a); strcat(cInst, "-1");}
+	if(c == 0b000010) {strcpy(cInst, "D+"); strcat(cInst, a);}
+	if(c == 0b010011) {strcpy(cInst, "D-"); strcat(cInst, a);}
+	if(c == 0b000111) {strcpy(cInst, a); strcat(cInst, "-D");}
+	if(c == 0b000000) {strcpy(cInst, "D&"); strcat(cInst, a);}
+	if(c == 0b010101) {strcpy(cInst, "D|"); strcat(cInst, a);}
+	
+}
 
 
 
@@ -153,6 +190,9 @@ void printInst() {
 	if(inst[11] == 1) { printf("D");}
 	if(inst[12] == 1) { printf("M");}
 	if(inst[10] + inst[11] + inst[12] > 0) {printf("=");}
+	
+	aluInst();
+	printf("%s",cInst);
 	
 	if(inst[13] + inst[14] + inst[15] > 0) {
 		printf(";");
