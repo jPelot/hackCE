@@ -7,6 +7,8 @@
 
 
 
+char jmp[8][4] = {"","JGT","JEQ","JGE","JLT","JNE","JLE","JMP"};
+
 
 /*
 
@@ -34,7 +36,7 @@ uint8_t handle;
 bool end = false;
 
 // Memory
-int16_t ram16k[16000];
+int16_t ram16k[16384];
 
 
 // Instructions
@@ -56,19 +58,30 @@ bool negF;
 
 
 
-
-
-void jumpPC() {
-	PC = aReg;
+void jump() {
+	if(inst[13] == 1 && negF) {ti_Seek(aReg*2, SEEK_SET, handle);}
+	if(inst[14] == 1 && zeroF) {ti_Seek(aReg*2, SEEK_SET, handle);}
+	if(inst[13] == 1 && !negF && !zeroF) {ti_Seek(aReg*2, SEEK_SET, handle);}
 }
 
 
 int16_t ramRead() {
-	
+	if(aReg < 0) {
+		return 0;
+	}
+	if(aReg < 16384) {
+		return ram16k[aReg];
+	}
 	return 0;
 }
 
 void ramWrite() {
+	if(aReg < 0) {
+		return;
+	}
+	if(aReg < 16384) {
+		ram16k[aReg] = aluOut;
+	}
 }
 
 
@@ -129,6 +142,22 @@ void printInst() {
 	for(int i = 0; i < 16; i++) {
 		printf("%i", inst[i]);
 	}
+	printf(" ");
+	if(inst[0] == 0) {
+		printf("@%i", value);
+		os_NewLine();
+		return;
+	}
+	
+	if(inst[10] == 1) { printf("A");}
+	if(inst[11] == 1) { printf("D");}
+	if(inst[12] == 1) { printf("M");}
+	if(inst[10] + inst[11] + inst[12] > 0) {printf("=");}
+	
+	if(inst[13] + inst[14] + inst[15] > 0) {
+		printf(";");
+		printf("%s",jmp[value & 7]);
+	}
 	os_NewLine();
 }
 
@@ -148,6 +177,7 @@ void processInst() {
 	
 	alu();
 	dest();
+	jump();
 }
 
 
@@ -157,7 +187,7 @@ void run() {
 	while(true) {
 		loadInst();
 		if(end) {
-			//break;
+			break;
 		}
 		printInst();
 		processInst();
@@ -165,7 +195,6 @@ void run() {
 		
 		key = kb_Data[1] == kb_2nd;
 		if (key && !prevkey) {
-			end = true;
 			break;
 		}
 		prevkey = key;
@@ -180,6 +209,7 @@ int main(void)
 	// Clear screen
 	os_ClrHome();
 	
+	printf("loading TEST\n");
 	// Open file, creates handle object
 	handle = ti_Open("TEST", "r");
 	if(handle == 0) {	// 0 if error while reading file
@@ -188,10 +218,7 @@ int main(void)
 	
 	run();
 	
-	printf("%i", dReg);
-	os_NewLine();
-	
-	printf("%i", ti_GetSize(handle));
+	printf("A: %i D: %i", aReg, dReg);
 	os_NewLine();
 	
 	char* input = "";
